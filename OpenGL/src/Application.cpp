@@ -49,6 +49,15 @@ int main(void)
 					position,
 					GL_STATIC_DRAW);
 
+	// 데이터를 해석하는 방법
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0,	// Index
+							2,	// 하나의 vertex에 몇개의 데이터를 넘기는지(n차원)
+							GL_FLOAT,	// Data Type
+							GL_FALSE,	// Normalization
+							sizeof(float) * 2,	// stride
+							0);	// offset
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
