@@ -128,27 +128,43 @@ int main(void)
 
 	std::cout << glGetString(GL_VERSION) << std::endl; //내 플랫폼의 GL_Version 출력해보기
 
-	float position[6] = {
-		-0.5f, -0.5f,
-		0.0f, 0.5f,
-		0.5f, -0.5f
+	//glEnable(GL_CULL_FACE);
+	float position[] = {
+		-0.5f, -0.5f, 0.0f,	//0
+		0.5f, -0.5f, 0.0f,	//1
+		0.5f, 0.5f, 0.0f,	//2
+		-0.5f, 0.5f, 0.0f	//3
 	};
 
+	unsigned int indices[] = {	//index buffer를 함께 사용 (index는 unsigned int type)
+		0, 1, 2,	//t1
+		2, 3, 0		//t2
+	};
+
+	//--------데이터를 전달하는 과정--------//
 	unsigned int bufferID;
-	glGenBuffers(1, &bufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, bufferID); // bind == activate
-	glBufferData(GL_ARRAY_BUFFER,	// 실제 CPU -> GPU
-					6 * sizeof(float),
+	glGenBuffers(1, &bufferID);										//1. 버퍼 생성
+	glBindBuffer(GL_ARRAY_BUFFER, bufferID); // bind == activate	//2. 바인딩 ("작업 상태")
+	glBufferData(GL_ARRAY_BUFFER,	// 실제 CPU -> GPU				//3. 작업 상태 버퍼에 데이터 전달
+					12 * sizeof(float),
 					position,
 					GL_STATIC_DRAW);
+
+	unsigned int ibo;	//Index Buffer Object
+	glGenBuffers(1, &ibo);												//1. 인덱스 버퍼 생성
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);	//<-- bind  == activate	//2. 바인딩 ("작업 상태"), 이전과는 달리 GL_ELEMENT_ARRAY_BUFFER
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,	//실제 CPU -> GPU			//3. 작업 상태 버퍼에 데이터 전달
+				6 * sizeof(unsigned int),
+				indices,
+				GL_STATIC_DRAW);
 
 	// 데이터를 해석하는 방법
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0,	// Index (location)
-							2,	// 하나의 vertex에 몇개의 데이터를 넘기는지(n차원)
+							3,	// 하나의 vertex에 몇개의 데이터를 넘기는지(n차원)
 							GL_FLOAT,	// Data Type
 							GL_FALSE,	// Normalization
-							sizeof(float) * 2,	// stride
+							sizeof(float) * 3,	// stride
 							0);	// offset
 
 	// Shader
@@ -164,7 +180,11 @@ int main(void)
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3); //draw call
+		//glDrawArrays(GL_TRIANGLES, 0, 3); //draw call
+		glDrawElements(GL_TRIANGLES,	//draw call
+						6,
+						GL_UNSIGNED_INT,
+						nullptr);
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
