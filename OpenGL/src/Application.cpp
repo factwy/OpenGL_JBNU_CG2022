@@ -11,6 +11,29 @@
 #include <string>
 #include <sstream>
 
+//__debugbreak()는 MSVC에만 사용 가능
+#define ASSERT(x) if ((!x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+								x;\
+								ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+//glGetError는 에러를 하나씩만 반환하기 때문에, 한 번 확인에 모든 오류를 뽑아내는 것이 필요함.
+static void GLClearError()
+{
+	while (glGetError() != GL_NO_ERROR);	// GL_NO_ERROR == 0
+}
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+	while (GLenum error = glGetError())
+	{
+		std::cout << "[OpenGL Error] (" << error << ") : " << function <<
+			" " << file << " in line " << line << std::endl;
+		return false;
+	}
+	return true;
+}
+
 struct ShaderProgramSource
 {
 	std::string VertexSource;
@@ -181,10 +204,10 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//glDrawArrays(GL_TRIANGLES, 0, 3); //draw call
-		glDrawElements(GL_TRIANGLES,	//draw call
+		GLCall(glDrawElements(GL_TRIANGLES,	//draw call
 						6,
 						GL_UNSIGNED_INT,
-						nullptr);
+						nullptr));
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
