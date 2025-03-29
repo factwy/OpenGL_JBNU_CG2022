@@ -7,6 +7,50 @@
 #include <GL/glew.h> //glfw보다 먼저 include해야 함
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>	// Basic.shader를 읽기 위한 라이브러리 (fstream, string, sstream)
+#include <string>
+#include <sstream>
+
+struct ShaderProgramSource
+{
+	std::string VertexSource;
+	std::string FragSource;
+};
+
+//--------셰이더 파일 파싱 함수--------//
+static ShaderProgramSource ParseShader(const std::string& filepath)
+{
+	std::ifstream stream(filepath);
+
+	enum class ShaderType
+	{
+		NONE = -1, VERTEX = 0, FRAGMENT = 1
+	};
+
+	std::string line;
+	std::stringstream ss[2];
+	ShaderType type = ShaderType::NONE;
+	while (getline(stream, line))
+	{
+		if (line.find("#shader") != std::string::npos)
+		{
+			if (line.find("vertex") != std::string::npos)	//vertex 셰이더 섹션
+			{
+				type = ShaderType::VERTEX;
+			}
+			else if (line.find("fragment") != std::string::npos)	//fragment 셰이더 섹션
+			{
+				type = ShaderType::FRAGMENT;
+			}
+		}
+		else
+		{
+			ss[(int)type] << line << '\n';	// 코드를 stringstream에 삽입
+		}
+	}
+
+	return { ss[0].str(), ss[1].str() };
+}
 
 //--------Shader 컴파일 함수----------//
 static unsigned int CompileShader(unsigned int type, const std::string& source)
@@ -108,27 +152,9 @@ int main(void)
 							0);	// offset
 
 	// Shader
-	std::string vertexShader =
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) in vec4 position;" //여기 있는 location = 0가, 데이터 해석부분의 index 0을 의미함
-		"\n"
-		"void main()\n"
-		"{\n"
-		"	gl_Position = position;\n" //119에서 보다시피, 2개의 값만 전달했지만, 알아서 vec4로 변환해줌
-		"}\n";
+	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
-	std::string fragShader =
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) out vec4 color;" //출력 color
-		"\n"
-		"void main()\n"
-		"{\n"
-		"	color = vec4(1.0, 1.0 ,0.0, 1.0);\n" //R 1, G 1, B 0 (노란색), 투명도 1 으로 설정
-		"}\n";
-
-	unsigned int shader = CreateShader(vertexShader, fragShader);	// GPU에 존재하는 Shader의 index
+	unsigned int shader = CreateShader(source.VertexSource, source.FragSource);	// GPU에 존재하는 Shader의 index
 	glUseProgram(shader); //active (bind)
 	//draw call은 작업 상태인 셰이더 프로그램을 사용하여 작업 상태인 버퍼 데이터를 그림
 
